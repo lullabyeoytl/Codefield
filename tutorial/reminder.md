@@ -662,23 +662,30 @@ Your task is to determine the maximum and minimum values in the sliding window a
 
  void add(int x,int y)
  {
-    for( ; x<=N;x+=x&-x)c[x]+=y;
+    for( ; x<=N;x += x&-x)c[x]+=y;
  }
  //!节点x的祖先：x+lowbit(x);
  ```
- 树状数组的初始化：c初始全空，然后对每个x(x从小到大，a[x]在每个要加的地方加一遍）执行add(x,a[x]),NlogN量级
+
+ 树状数组的初始化：
+ 
+ c初始全空，然后对每个x(x从小到大，a[x]在每个要加的地方加一遍）执行add(x,a[x]),NlogN量级
 
  对于二维也是一样，每一维实际独立，也是记录x-lowbit(x)+1,y与y-lowbit(y)+1,双重循环一下就ok
-*/
-/* 线段树
- 定义：1每个节点代表一个区间
- 2有唯一根节点，代表整个统计范围，如[1,N]
- 3每个叶节点代表长为1的元区间[x,x];
-!4每个内部节点[l,r]，左节点是[l,mid],右节点是[mid,r],mid=(l+r)/2;
- 5.编号规则：父子两倍：根节点1，x左子节点为2*x,右子节点2*x+1，最后一行编号可以不连续，保存线段树数组长度要不小于4N.
- 1)
- 建树：以区间dp中区间最大值为例：
+
+
+# 线段树
+ 定义：
+- 1每个节点代表一个区间
+- 2有唯一根节点，代表整个统计范围，如[1,N]
+- 3每个叶节点代表长为1的元区间[x,x];
+- 4每个内部节点[l,r]，左节点是[l,mid],右节点是[mid,r],mid=(l+r)/2;
+- 5.编号规则：父子两倍：根节点1，x左子节点为2*x,右子节点2*x+1，最后一行编号可以不连续，保存线段树数组长度要不小于4N.
+ ## 建树
+ 以区间dp中区间最大值为例：
+ 
  计为dat(l,r),dat(l,r)=max(dat(l,mid),dat(mid+1,r));
+ ```cpp
  struct SegmentTree
  {
     int l,r;
@@ -699,8 +706,10 @@ Your task is to determine the maximum and minimum values in the sliding window a
     t[p].dat = max(t[2*p]).dat,t[2*p+1].dat)//先递归得到t[2*p],t[2*p+1],再得到t[p];
  }
  build(1,1,n);//调用入口
- 2)
+ ```
+ ## 修改（单点直接修改）
  单点修改：自下至上修改x为v，从[x,x]开始
+ ```cpp
  void change(int p, int x, int v)
  {
     if(t[p].l == t[p].r)
@@ -714,13 +723,18 @@ Your task is to determine the maximum and minimum values in the sliding window a
     t[p].dat==max(t[2*p].dat, t[2*p+1].dat);
  }
  change(1,x,v);//调用入口
- 3)
- 区间查询：递归过程：1.若[l,r]完全覆盖当前节点代表的区间，则立即回溯，并且该节点的dat值为候选答案。
- 2.若左子节点与[l,r]有重叠部分，则递归访问左子节点
- 3.若右子节点与[l,r]有重叠部分，则递归访问右子节点
+ ```
+ ## 查询
+
+ 区间查询：递归过程：
+ - 1.若[l,r]完全覆盖当前节点代表的区间，则立即回溯，并且该节点的dat值为候选答案。
+ - 2.若左子节点与[l,r]有重叠部分，则递归访问左子节点
+ - 3.若右子节点与[l,r]有重叠部分，则递归访问右子节点
+ ```cpp 
  int ask(int p,int l,int r)
  {
-    if(l<=t[p].l&&r>=t[p].r)return t[p].dat;//若完全包含,就直接作为候选答案之一，在后面val=max(val,ask());中更新所需答案
+    if(l<=t[p].l&&r>=t[p].r)return t[p].dat;
+    //若完全包含,就直接作为候选答案之一，在后面val=max(val,ask());中更新所需答案
     int mid = (t[p].l+t[p].r)/2;
     int val = -(1<<30);//负无穷大
     if(L<=mid)val=max(val,ask(p*2,l,r));//左有重叠，就找下去
@@ -731,15 +745,28 @@ Your task is to determine the maximum and minimum values in the sliding window a
  }
  cout<<ask(1,1,r)<<endl;
  //!区间最值自此除了用st表，还可以用线段树。
-!!ps: 此处以询问区间和为例。实际上线段树可以处理很多符合结合律的操作
-  根据需求可在线段树里动态储存许多信息，关键是抓住怎么由2*p与2*p+1状态递推到编号p；
+ ```
+!!ps: 
+此处以询问区间和为例。实际上线段树可以处理很多符合结合律的操作
+  
+根据需求可在线段树里动态储存许多信息，关键是抓住怎么由2*p与2*p+1状态递推到编号p；
  
- !4)区间修改：
- lazy tag:比如说修改[l,r],[pr,lr]属于[l,r]但[pr,lr]的父节点也包含于[l,r],
+## 区间修改：
+ 
+ lazy tag:
+ 
+ 比如说修改[l,r],[pr,lr]属于[l,r]但[pr,lr]的父节点也包含于[l,r],
+ 
  则无须修改[pr,lr],只需修改更大的（才能作为备选）就行。
+ 
  也就是说除了在修改指令中直接划分成的O(log N)个节点外，任意节点修改延迟到“后续操作中递归到进入父节点时”执行
+ 
  时间复杂度：O（N）
+ 
+ 对区间要改的区间[l,r]中的x,lazy tag所在位置[l1,r1]：树上有标号的最大的含有x且属于[l,r]的区间
+
  example:把数列中第l-r个数都加d
+ ```cpp
  struct segmenttree
  {
     int l,r;
@@ -747,11 +774,13 @@ Your task is to determine the maximum and minimum values in the sliding window a
     #define l(x) tree[x].l
     #define r(x) tree[x].r
     #define sum(x) tree[x].sum
-    #define add(x) tree[x].add   //lazy tag:表示该节点曾经被修改但其子节点尚未被更新
+    #define add(x) tree[x].add   
+    //lazy tag:表示该节点曾经被修改但其子节点尚未被更新
  }tree[4*n];
  int a[n],n,m;
-  //建树
- void build(int p,int l ,int r)
+  
+  //------------建树----------//
+void build(int p,int l ,int r)
  {
     l(p)=l,r(p)=r;
     if(l==r)
@@ -764,22 +793,27 @@ Your task is to determine the maximum and minimum values in the sliding window a
     build(p*2+1,mid+1,r);
     sum(p) = sum(p*2)+sum(p*2+1);
  }
-  //下实现延迟标记向下传递
-  void spread(int p)
+
+  //------下实现延迟标记向下传递-----//
+void spread(int p)
   {
     if(add(p))//!节点p有标记
     {
-        sum(p*2)+=add(p)*(r(p*2)-l(p*2)+1);//!更新左子节点信息,若父节点有标记，则没必要递归到子节点，让子节点全部加d就OK，然后让标记下延重复操作
-        sum(p*2+1)+=add(p)*(r(p*2+1)-l(p*2+1)+1);//!更新右子节点信息
+        sum(p*2)+=add(p)*(r(p*2)-l(p*2)+1);
+        /**
+         * !更新左子节点信息,若父节点有标记，则没必要递归到子节点，让子节点全部加d就OK，然后让标记下延重复操作
+         */
+        sum(p*2+1)+=add(p)*(r(p*2+1)-l(p*2+1)+1);// 更新右子节点信息
         add(p*2)+=add(p);//给左节点打标记
         add(p*2+1)+=add(p);//给右节点打标记
         add(p) = 0;//!清除p标记（此时其子节点也完成修改）,保证标记只在第一个包含地方打
     }
   }
-  //进行区间修改
+  
+  //--------进行区间修改------------//
   void change(int p, int l, int r, int d)
   {
-    if(l<=l(p)&&r>=r(p))//见;azy tag笔记中对应的完全覆盖情况
+    if(l<=l(p)&&r>=r(p))//见lazy tag笔记中对应的完全覆盖情况
     {
         sum(p)+=(long long)d * (r(p)-l(p)+1);
         add(p)+=d;
@@ -791,7 +825,8 @@ Your task is to determine the maximum and minimum values in the sliding window a
     if(r>mid)change(p*2+1,l,r,d);
     sum(p) = sum(p*2)+sum(p*2+1);
   }
-  //进行区间查询
+
+  //---------进行区间查询-----------//
   long long ask(int p,int l,int r)
   {
     if(l<=l(p)&&r>=r(p))return sum(p);
@@ -804,16 +839,26 @@ Your task is to determine the maximum and minimum values in the sliding window a
     if(r>mid)val += ask(p*2+1,l,r);
     return val;
   }
-*/
-/* __int128的使用:
+```
+# __int128的使用:
  用途：long long不够但不想开高精度，范围是-2^127到2^127-1,也就是10的39次方左右
+ 
  __int128在gcc、codeblocks、vs2017都是不被支持的，不过__int128在Linux上可以编译并且能用。
+ 
  我们提交到大部分OJ上都是可以编译且能用的。
- 输入输出
- C/C++标准IO是不认识__int128这种数据类型的，cin和cout是无法输出__int128的，所以我们要自己实现输入输出，其他的运算，与int没有什么不同。
+ 
+ ## 输入输出
+ 
+ C/C++标准IO是不认识__int128这种数据类型的，cin和cout是无法输出__int128的，所以我们要自己实现输入输出，
+ 
+ 其他的运算，与int没有什么不同。
+ 
  可以对long long直接强转成__int128
+ 
  __int128能直接做加减乘除赋值
+ 
  输入输出按以下格式：
+ ```cpp
  #include <bits/stdc++.h>
  using namespace std;
  inline __int128 read()
@@ -849,10 +894,10 @@ Your task is to determine the maximum and minimum values in the sliding window a
     cout << endl;
     return 0;
 }
-
-*/
-/* 快速幂板子
+```
+# 快速幂板子
 求a^b%c;
+```cpp
  long long mc(long long a, long long b, long long c) 
 {
     long long jc=1;
@@ -864,9 +909,10 @@ Your task is to determine the maximum and minimum values in the sliding window a
     }
     return jc;
 }
-*/
-/* 模p的逆元板子：用于分数取模，组合数等等
+```
+ 模p的逆元板子：用于分数取模，组合数等等
   1. 利用费马小定理&欧拉定理+快速幂：
+ ```cpp
  long long qkpow(long long a,long long p,long long mod)
  {
 	 long long t=1,tt=a%mod;
@@ -882,30 +928,45 @@ Your task is to determine the maximum and minimum values in the sliding window a
  {
 	 return qkpow(a,mod-2,mod);
  }//简单欧拉定理
-  1. 实质即ax+by%p=1的不定方程求解（取b=p即可）
+ ```
+  2. 实质即ax+by%p=1的不定方程求解（取b=p即可）
+  
   解不定方程用的方法叫exgcd(扩展欧几里德算法)
+ ```cpp
  void Exgcd(ll a, ll b, ll &x, ll &y) {
     if (!b) x = 1, y = 0;
     else Exgcd(b, a % b, y, x), y -= a / b * x;
 } 
  i mol p的逆：先定义好x,y,调用exgcd(i,p,x,y),输出x%p就可
- 3.线性算法：在算一连串的逆比上两个快：
+ ```
+
+  3. 线性算法：在算一连串的逆比上两个快：
  设p=k*i+r;
+  
   k*i+r==0(mod p)
+  
   multi i^-1,r^-1
+  
   k*r^-1+i^-1==0;
+  
   i^-1 == -k*r^-1;
+  
   i^-1 == -[p/i]*(p mol i )^-1
+  
   由此知当然是可从i=1一直往后递推得到一连串的
+  
   代码：
+  ```cpp
   inv[1] = 1;
  for(int i = 2; i < p; ++ i)
     inv[i] = (p - p / i) * inv[p % i] % p;
-*/
+```
 
-/* 可持续化线段树
+# 可持续化线段树
  过程详解：见知乎收藏文章
+ 
  代码（luoguP3919):
+ ```cpp
  #include <bits/stdc++.h>
 using namespace std;
 int read()
@@ -1001,22 +1062,27 @@ int main()
     }
     return 0;
 }
+```
 
-//!对于可持续化线段树的区间修改
+## 对于可持续化线段树的区间修改
+
  若是普通线段树，会用lazy tag去修改sum数组的值，利用spread操作
+
  !这里可持续化线段树中只用lazy tag记录当前区间应该怎么改
+
  !!关键是lazy tag不下传
+
  搜索时向下传lazy tag
- 
+```cpp 
  void pushup(int id,int l,int r)
 {
     //当前区间的值等于左右子节点的值的和加上当前区间的lazy标记	                
     sum[id]=sum[ln[id]]+sum[rn[id]]+(r-l+1)*lazy[id];
 }
-
- 区间更新
-  //l和r为当前区间左右端点，L和R为目标区间左右端点
- 
+```
+ ## 区间更新
+l和r为当前区间左右端点，L和R为目标区间左右端点
+```cpp 
  void update_interval(int pre,int id,int L,int R,int val,int l,int r)
  {
  	ln[id]=ln[pre];rn[id]=rn[pre],sum[id]=sum[pre],lazy[id]=lazy[pre];
@@ -1031,10 +1097,12 @@ int main()
  	if(mid+1<=R) rn[id]=++idx,update_interval(rn[pre],rn[id],L,R,val,mid+1,r);
  	pushup(id,l,r);
  }
-
- 区间查询
-  //l和r为当前区间左右端点，L和R为目标区间左右端点
-  //询问时需要下传lazy，因为没有spread操作，参数中要有lz
+```
+ ## 区间查询
+  l和r为当前区间左右端点，L和R为目标区间左右端点
+  
+  询问时需要下传lazy，因为没有spread操作，参数中要有lz
+ ```cpp
  ll query_interval(int id,int L,int R,ll lz,int l,int r)
  {
  	if(l>=L&&r<=R) return lz*(r-l+1)+sum[id];
@@ -1044,27 +1112,30 @@ int main()
  	if(mid+1<=R) ans+=query_interval(rn[id],L,R,lz+lazy[id],mid+1,r);
  	return ans;
  }
+```
 
- 应用一：利用可持久化线段树求静态区间第k小数的方法
+- 应用一：利用可持久化线段树求静态区间第k小数的方法
  luoguP3834
 
-*/
 
-/* 离散化:只关心偏序关系不关心实际大小
- 一.按大小偏序关系不变：即先创立副本，排序，去重，查找每个元素在副本中的位置，排名作为离散化后的值
+# 离散化:只关心偏序关系不关心实际大小
+
+- 一.按大小偏序关系不变：即先创立副本，排序，去重，查找每个元素在副本中的位置，排名作为离散化后的值
+```cpp
  for (int i = 1; i <= n; ++i)  // step 1
   tmp[i] = arr[i];
  std::sort(tmp + 1, tmp + n + 1);                          // step 2
  int len = std::unique(tmp + 1, tmp + n + 1) - (tmp + 1);  // step 3
  for (int i = 1; i <= n; ++i)                              // step 4
   arr[i] = std::lower_bound(tmp + 1, tmp + len + 1, arr[i]) - tmp;
- （查找即二分，lower_bound)
+ //(查找即二分，lower_bound)
+ ```
  复杂度：nlnn
 
- 二。根据输入顺序离散化为不同数据
- 对数据建立结构体标明出现顺序与值
- 将副本从小到大排序，相同值按顺序从小到大排序
- 离散化后数组放回原数组
+- 二.根据输入顺序离散化为不同数据对数据建立结构体标明出现顺序与值将副本从小到大排序，相同值按顺序从小到大排序
+  
+  离散化后数组放回原数组
+ ```cpp
  struct Data {
   int idx, val;
 
@@ -1079,56 +1150,81 @@ int main()
  std::sort(tmp + 1, tmp + n + 1);
  for (int i = 1; i <= n; ++i) arr[tmp[i].idx] = i;
 
-*/
+```
 
-/* 莫队算法
+# 莫队算法
  莫队是处理区间问题的乱搞神器，
+ 
  尤其是对于离线查询问题，因为会对查询做一些预处理
+ 
  当然也可以做在线查询，比如带修莫队。
+ 
  对查询先进行预处理，即排序
+ 
  因为如果是在一个区间已经处理了的情况下，另一个区间只需这个区间首尾平移很近的距离
+ 
  那么这个计算量就完全可以接受
+ 
  挪动操作：
+ ```cpp
   //ans1是上一次查询的左端点，ans2是上一次查询的右端点
   //lef是当前查询的左端点，rig是当前查询的右端点
  while(ans1>lef) ans1--,add(a[ans1]);//add是扩展函数
  while(ans2<rig) ans2++,add(a[ans2]);
  while(ans1<lef) del(a[ans1]),ans1++;//del是删除函数
  while(ans2>rig) del(a[ans2]),ans2--;
+ ```
  其中add和del表示挪动端点x过程中要改变什么,
  
  排序操作：先分块成sqrt(n)块，然后先将这些区域按左端点l所在的块从左到右排序
+ 
  再把l所在相同区间按r从小到大排序
+ 
+ （说人话就是从内含（不一定完全包含，所以顺序可以规定先左后右）的小区间往外扩）
+```cpp
  int block=sqrt(n);
  inline bool cmp(node x,node y){
 	 if((x.l-1)/block==(y.l-1)/block) return x.r<y.r;
 	 return x.l/block<y.l/block;
  }
 
+```
 
-*/
-
-/* vector
+# vector
  vector:实际啊可以理解为一个长度可变的数组、支持随机访问，删改一般在末尾
+
  头文件：include <vector>
- vector <int> a //相当于一个长度动态变化的数组
- vector <int> b[233]  //相当与第一维长233，第二维长度变化的int数组
+
+```vector <int> a //相当于一个长度动态变化的数组```
+
+ ```vector <int> b[233]  //相当与第一维长233，第二维长度变化的int数组```
+
  迭代器：相当于stl容器的指针
-*/
 
-/* set & multiset
+
+# set & multiset
  分别代表有序集合与有序多重集
+ 
  内部实现：实质是红黑树，与优先队列一样，储存元素要先定义小于号
+ 
  insert()插入操作：时间复杂度为log n
-*/
 
-/* map
+
+# map
  建立一个key-value的映射，实质是一个以key为关键码的红黑树
- key必须定义小于号：map<key_type , value_type> name;
- example map <string ,int>hash :实质是一个哈希表
+ 
+ key必须定义小于号：``` map<key_type , value_type> name;```
+ 
+ example 
+ ```map <string ,int>hash``` :实质是一个哈希表
+ 
  操作：log(n)
- h[key]:就是value,若找不到key,则会新建一个（key,0),即h[key]=0,所以找之前最好先find
+ 
+ h[key]:就是value,若找不到key,则会新建一个(key,0),即h[key]=0,所以找之前
+ 最好先find
+
  这个特性反而可以用来建立表统计字符串出现个数
+ ```cpp
  map <string,int> h;
  char str[25];
  for(int i=1;i<=n;i++){
@@ -1141,14 +1237,18 @@ int main()
     if(h.find(str)==h.end())puts("0");
     else 
   }
-*/
+```
 
-/* bitset:
+# bitset:
  多位二进值数，相当于状态压缩的而二进制数组
+ 
  位运算ok,s[k]表示第几位，s[0]最低为，
+ 
  s.count()返回多少个一
+ 
  s.set(),所有为变成1,reset()变成0
+ 
  s.set(k,v)把s的第k位改成v,即s[k]=v;
-*/
+
 
 <font>
