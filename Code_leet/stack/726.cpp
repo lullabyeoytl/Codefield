@@ -30,16 +30,19 @@ public:
     }
     
     string get_atom(string s) {
-        if (s[1]>='a'&&s[1]<='z'){
-            string s1 = std::string (1,s[0]);
-            string s2 = std::string (1,s[1]);
-            s1+=s2;
-            return s1;
+        int i=0;
+        for(;i<s.size();i++){
+            if(i==0){
+                continue;
+            }
+            else if(s[i]>='a'&&s[i]<='z'){
+                continue;
+            }
+            else{
+                break;
+            }
         }
-        else{
-            string s1 = std::string (1,s[0]);
-            return s1;
-        }
+        return s.substr(0,i);
     }
     string countOfAtoms(string formula) {
         stack<pair<string, int>> st;
@@ -48,6 +51,7 @@ public:
         map<string, int> mp;
         while (i < n) {
             if (formula[i]>='0'&&formula[i]<='9'){
+                i++;
                 continue;
             }
             else if(formula[i] =='('){
@@ -55,13 +59,16 @@ public:
                 i++;
             }
             else if(formula[i] >= 'A' && formula[i] <= 'Z'&& !st.empty()){
-                string s = get_atom(formula.substr(i,2));
-                s.size()==1?st.push(make_pair(s,get_num(formula.substr(i+1,n-i-1)))):st.push(make_pair(s,get_num(formula.substr(i+2,n-i-2))));
+                string s = get_atom(formula.substr(i,n-i));
+                int atom_size = s.size();
+                int num = get_num(formula.substr(i+atom_size,n-i-atom_size));
+                st.push(make_pair(s,num));
                 i+=s.size();
             }
             else if(formula[i] >= 'A' && formula[i] <= 'Z'&& st.empty()){
-                string s = get_atom(formula.substr(i,2));
-                int num = s.size()==1?get_num(formula.substr(i+1,n-i-1)):get_num(formula.substr(i+2,n-i-2));
+                string s = get_atom(formula.substr(i,n-i));
+                int atom_size = s.size();
+                int num = get_num(formula.substr(i+atom_size,n-i-atom_size));
                 mp[s]+=num;
                 i+=s.size();
             }
@@ -109,13 +116,5 @@ public:
     }
 };
 /**
- * if (formula[i]>='A' && formula[i]<='Z') {
-                if(i+1<n && (formula[i+1]>='a' && formula[i+1]<='z')){
-                    string s1 = std::string (1,formula[i]);
-                    string s2 = std::string (1,formula[i+1]);
-                    s1+=s2;
-                    
-                    i+=2;
-                }
-            }   
+  细节还是细节！接连在if,for起始那里犯错，实在不该
  */
