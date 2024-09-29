@@ -1,8 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
-#include <map>
-
 
 const int MOD = 1000000007;
 
@@ -45,14 +43,15 @@ int main() {
             max_num = num[i];
         }
     }
-    std::vector<long long> dp(max_num+1,0);
+    long long* dp = (long long*)malloc(sizeof(long long)*(max_num+1)); 
     dp[0] = 0;
     dp[1] = 1;
     for (int i = 2; i <= max_num; i++) {
-        dp[i] = (3*dp[i-1]%MOD -dp[i-2]%MOD+MOD)%MOD;
+        dp[i] = ((3*dp[i-1]-dp[i-2])%MOD+MOD)%MOD;
     }
     for(int i=0;i<n;i++){
-        std::cout<<dp[num[i]]<<std::endl;
+        printf("%lld\n",dp[num[i]]);
     }
+    free(dp);
     return 0;
 }
