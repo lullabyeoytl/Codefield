@@ -1,3 +1,0 @@
-D:/oytl/Codefield/Code_leet/bfs/build/CMakeFiles/Tutorial.dir
-D:/oytl/Codefield/Code_leet/bfs/build/CMakeFiles/edit_cache.dir
-D:/oytl/Codefield/Code_leet/bfs/build/CMakeFiles/rebuild_cache.dir
